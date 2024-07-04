@@ -12,7 +12,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from stencil2d_solution import calculations as solution_calc
+from scripts.stencil2d_baseline import calculations as solution_calc
 
 
 """Path of the folder where the baseline solutions are stored"""
