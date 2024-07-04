@@ -4,3 +4,6 @@
 # Ignore results from others, but keep the folder structure
 data/*/*
 !data/**/.gitkeep
+
+# Ignore Pycache
+__pycache__
