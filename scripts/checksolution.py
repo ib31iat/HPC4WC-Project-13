@@ -8,15 +8,16 @@
 import argparse
 import re
 import os
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-from scripts.stencil2d_baseline import calculations as solution_calc
+from stencil2d_baseline import calculations as solution_calc
 
 
 """Path of the folder where the baseline solutions are stored"""
-BASELINE_SOLUTION_PATH = "../data/baseline"
+BASELINE_SOLUTION_PATH = "data/baseline"
 
 
 def parse_file_args(file_path):
@@ -53,7 +54,12 @@ def main():
     solution = np.load(args.solution)
 
     # Parse file path
-    nx, ny, nz, num_iter, num_halo = parse_file_args(args.solution)
+    try:
+        nx, ny, nz, num_iter, num_halo = parse_file_args(args.solution)
+    except ValueError:
+        raise ValueError(
+            "The file path does not contain the necessary information! Consult the README.md in the scripts folder for more information."
+        )
 
     # Load Baseline Solution
     baseline = None
@@ -82,4 +88,5 @@ def main():
 
 
 if __name__ == "__main__":
+    os.chdir(sys.path[0])  # Change the directory
     main()

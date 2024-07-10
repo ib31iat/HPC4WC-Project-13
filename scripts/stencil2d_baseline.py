@@ -6,6 +6,9 @@
 # Description: 4th-order diffusion
 #        Note: Based on https://github.com/ofuhrer/HPC4WC/blob/main/day1/stencil2d.py
 # ******************************************************
+import os
+import sys
+
 import click
 
 import numpy as np
@@ -159,4 +162,5 @@ def main(nx, ny, nz, num_iter, result_dir, num_halo):
 
 
 if __name__ == "__main__":
+    os.chdir(sys.path[0])  # Change the directory
     main()
