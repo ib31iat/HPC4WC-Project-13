@@ -17,7 +17,7 @@ from stencil2d_baseline import calculations as solution_calc
 
 
 """Path of the folder where the baseline solutions are stored"""
-BASELINE_SOLUTION_PATH = "data/baseline"
+BASELINE_SOLUTION_PATH = "../data/baseline"
 
 
 def parse_file_args(file_path):
@@ -49,6 +49,7 @@ def main():
         "-a", "--atol", metavar="T", type=float, default=1e-8, help="Absolute tolerance for the comparison."
     )
     parser.add_argument("-p", "--plot_result", type=bool, default=False, help="Make a plot of the result?")
+    parser.add_argument("-b", "--plot_baseline", type=bool, default=False, help="Make a plot of the baseline?")
     args = parser.parse_args()
 
     solution = np.load(args.solution)
@@ -82,9 +83,16 @@ def main():
     # Plot the results if desired
     if args.plot_result:
         plt.ioff()
+        plt.imshow(solution[solution.shape[0] // 2, :, :], origin="lower")
+        plt.colorbar()
+        plt.show()
+
+    # Plot the baseline if desired
+    if args.plot_baseline:
+        plt.ioff()
         plt.imshow(baseline[baseline.shape[0] // 2, :, :], origin="lower")
         plt.colorbar()
-        plt.close()
+        plt.show()
 
 
 if __name__ == "__main__":
