@@ -9,6 +9,8 @@
 import click
 
 import numpy as np
+from jax import numpy as jnp, config
+
 import time
 from datetime import datetime
 
@@ -32,13 +34,15 @@ def laplacian(in_field, lap_field, num_halo, extend=0):
     jb = num_halo - extend
     je = -num_halo + extend
 
-    lap_field[:, jb:je, ib:ie] = (
+    lap_field = lap_field.at[:, jb:je, ib:ie].set(
         -4.0 * in_field[:, jb:je, ib:ie]
         + in_field[:, jb:je, ib - 1 : ie - 1]
         + in_field[:, jb:je, ib + 1 : ie + 1 if ie != -1 else None]
         + in_field[:, jb - 1 : je - 1, ib:ie]
         + in_field[:, jb + 1 : je + 1 if je != -1 else None, ib:ie]
     )
+
+    return lap_field
 
 
 def update_halo(field, num_halo):
@@ -56,19 +60,21 @@ def update_halo(field, num_halo):
         Corners are updated in the left/right phase of the halo-update.
     """
     # bottom edge (without corners)
-    field[:, :num_halo, num_halo:-num_halo] = field[:, -2 * num_halo : -num_halo, num_halo:-num_halo]
+    field = field.at[:, :num_halo, num_halo:-num_halo].set(field[:, -2 * num_halo : -num_halo, num_halo:-num_halo])
 
     # top edge (without corners)
-    field[:, -num_halo:, num_halo:-num_halo] = field[:, num_halo : 2 * num_halo, num_halo:-num_halo]
+    field = field.at[:, -num_halo:, num_halo:-num_halo].set(field[:, num_halo : 2 * num_halo, num_halo:-num_halo])
 
     # left edge (including corners)
-    field[:, :, :num_halo] = field[:, :, -2 * num_halo : -num_halo]
+    field = field.at[:, :, :num_halo].set(field[:, :, -2 * num_halo : -num_halo])
 
     # right edge (including corners)
-    field[:, :, -num_halo:] = field[:, :, num_halo : 2 * num_halo]
+    field = field.at[:, :, -num_halo:].set(field[:, :, num_halo : 2 * num_halo])
+
+    return field
 
 
-def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
+def apply_diffusion(in_field, alpha, num_halo, num_iter=1):
     """Integrate 4th-order diffusion equation by a certain number of iterations.
 
     Parameters
@@ -82,15 +88,16 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
     num_iter : `int`, optional
         Number of iterations to execute.
     """
-    tmp_field = np.empty_like(in_field)
+    tmp_field = jnp.empty_like(in_field)
+    out_field = jnp.empty_like(in_field)
 
     for n in range(num_iter):
-        update_halo(in_field, num_halo)
+        in_field = update_halo(in_field, num_halo)
 
-        laplacian(in_field, tmp_field, num_halo=num_halo, extend=1)
-        laplacian(tmp_field, out_field, num_halo=num_halo, extend=0)
+        tmp_field = laplacian(in_field, tmp_field, num_halo=num_halo, extend=1)
+        out_field = laplacian(tmp_field, out_field, num_halo=num_halo, extend=0)
 
-        out_field[:, num_halo:-num_halo, num_halo:-num_halo] = (
+        out_field = out_field.at[:, num_halo:-num_halo, num_halo:-num_halo].set(
             in_field[:, num_halo:-num_halo, num_halo:-num_halo]
             - alpha * out_field[:, num_halo:-num_halo, num_halo:-num_halo]
         )
@@ -98,7 +105,12 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
         if n < num_iter - 1:
             in_field, out_field = out_field, in_field
         else:
-            update_halo(out_field, num_halo)
+            out_field = update_halo(out_field, num_halo)
+
+    if num_iter % 2 == 0:
+        in_field, out_field = out_field, in_field
+
+    return out_field
 
 
 def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False):
@@ -111,21 +123,19 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
     assert 2 <= num_halo <= 256, "Your have to specify a reasonable number of halo points"
     alpha = 1.0 / 32.0
 
-    in_field = np.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
-    in_field[
+    in_field = jnp.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
+    in_field = in_field.at[
         nz // 4 : 3 * nz // 4,
         num_halo + ny // 4 : num_halo + 3 * ny // 4,
         num_halo + nx // 4 : num_halo + 3 * nx // 4,
-    ] = 1.0
-
-    out_field = np.copy(in_field)
+    ].set(1.0)
 
     # warmup caches
-    apply_diffusion(in_field, out_field, alpha, num_halo)
+    apply_diffusion(in_field, alpha, num_halo)
 
     # time the actual work
     tic = time.time()
-    apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=num_iter)
+    out_field = apply_diffusion(in_field, alpha, num_halo, num_iter=num_iter)
     toc = time.time()
 
     print(f"Elapsed time for work = {toc - tic} s")
@@ -151,7 +161,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
 @click.option(
     "--result_dir",
     type=str,
-    default="../data/baseline",
+    default="../data/jax",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
 def main(nx, ny, nz, num_iter, result_dir, num_halo):
@@ -159,4 +169,5 @@ def main(nx, ny, nz, num_iter, result_dir, num_halo):
 
 
 if __name__ == "__main__":
+    config.update("jax_enable_x64", True)
     main()
