@@ -6,14 +6,15 @@
 # Description: 4th-order diffusion
 #        Note: Based on https://github.com/ofuhrer/HPC4WC/blob/main/day1/stencil2d.py
 # ******************************************************
-import os
-import sys
 
 import click
 
+import torch
 import numpy as np
 import time
 from datetime import datetime
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def laplacian(in_field, lap_field, num_halo, extend=0):
@@ -85,7 +86,7 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
     num_iter : `int`, optional
         Number of iterations to execute.
     """
-    tmp_field = np.empty_like(in_field)
+    tmp_field = torch.empty_like(in_field)
 
     for n in range(num_iter):
         update_halo(in_field, num_halo)
@@ -118,14 +119,14 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
     assert 2 <= num_halo <= 256, "Your have to specify a reasonable number of halo points"
     alpha = 1.0 / 32.0
 
-    in_field = np.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
+    in_field = torch.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo), device=device)
     in_field[
         nz // 4 : 3 * nz // 4,
         num_halo + ny // 4 : num_halo + 3 * ny // 4,
         num_halo + nx // 4 : num_halo + 3 * nx // 4,
     ] = 1.0
 
-    out_field = np.copy(in_field)
+    out_field = in_field.clone()
 
     # warmup caches
     apply_diffusion(in_field, out_field, alpha, num_halo)
@@ -138,10 +139,10 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
     print(f"Elapsed time for work = {toc - tic} s")
 
     result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}.npy"
-    np.save(result_path, out_field)
+    np.save(result_path, out_field.cpu())
 
     if return_result:
-        return out_field
+        return out_field.cpu()
 
 
 @click.command()
@@ -158,7 +159,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
 @click.option(
     "--result_dir",
     type=str,
-    default="../data/baseline",
+    default="../data/torch",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
 def main(nx, ny, nz, num_iter, result_dir, num_halo):
@@ -166,5 +167,5 @@ def main(nx, ny, nz, num_iter, result_dir, num_halo):
 
 
 if __name__ == "__main__":
-    os.chdir(sys.path[0])  # Change the directory
+    # config.update("jax_enable_x64", True)
     main()
