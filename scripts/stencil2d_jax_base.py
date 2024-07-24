@@ -113,7 +113,7 @@ def apply_diffusion(in_field, alpha, num_halo, num_iter=1):
     return out_field
 
 
-def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False):
+def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False):
     """Driver for apply_diffusion that sets up fields and does timings"""
 
     assert 0 < nx <= 1024 * 1024, "You have to specify a reasonable value for nx"
@@ -122,6 +122,9 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
     assert 0 < num_iter <= 1024 * 1024, "You have to specify a reasonable value for num_iter"
     assert 2 <= num_halo <= 256, "Your have to specify a reasonable number of halo points"
     alpha = 1.0 / 32.0
+
+    if precision == 64:
+        config.update("jax_enable_x64", True)
 
     in_field = jnp.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
     in_field = in_field.at[
@@ -140,7 +143,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
 
     print(f"Elapsed time for work = {toc - tic} s")
 
-    result_path = f"{result_dir}/{datetime.now().strftime("%Y%m%dT%H%M%S")}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}.npy"
+    result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
     np.save(result_path, out_field)
 
     if return_result:
@@ -152,6 +155,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
 @click.option("--ny", type=int, required=True, help="Number of gridpoints in y-direction")
 @click.option("--nz", type=int, required=True, help="Number of gridpoints in z-direction")
 @click.option("--num_iter", type=int, required=True, help="Number of iterations")
+@click.option("--precision", type=click.Choice(["64", "32"]), default="64", required=True, help="Precision")
 @click.option(
     "--num_halo",
     type=int,
@@ -164,10 +168,9 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False
     default="../data/jax",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
-def main(nx, ny, nz, num_iter, result_dir, num_halo):
-    calculations(nx, ny, nz, num_iter, result_dir, num_halo, return_result=False)
+def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
+    calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False)
 
 
 if __name__ == "__main__":
-    config.update("jax_enable_x64", True)
     main()

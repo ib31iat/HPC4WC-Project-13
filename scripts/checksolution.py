@@ -56,7 +56,7 @@ def main():
 
     # Parse file path
     try:
-        nx, ny, nz, num_iter, num_halo = parse_file_args(args.solution)
+        nx, ny, nz, num_iter, num_halo, precision = parse_file_args(args.solution)
     except ValueError:
         raise ValueError(
             "The file path does not contain the necessary information! Consult the README.md in the scripts folder for more information."
@@ -65,12 +65,12 @@ def main():
     # Load Baseline Solution
     baseline = None
     for f in os.listdir(BASELINE_SOLUTION_PATH):
-        if f"nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}" in f:
+        if f"nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}" in f:
             baseline = np.load(os.path.join(BASELINE_SOLUTION_PATH, f))
 
     if baseline is None:
         # Solution has not been generated yet
-        baseline = solution_calc(nx, ny, nz, num_iter, BASELINE_SOLUTION_PATH, num_halo, return_result=True)
+        baseline = solution_calc(nx, ny, nz, num_iter, BASELINE_SOLUTION_PATH, num_halo, precision, return_result=True)
 
     # Compare the two solutions
     comparison_result = np.allclose(solution, baseline, rtol=args.rtol, atol=args.atol, equal_nan=True)
