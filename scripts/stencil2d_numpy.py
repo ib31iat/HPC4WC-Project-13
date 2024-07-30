@@ -6,89 +6,93 @@ import cupy as cp
 import time
 from datetime import datetime
 
-def laplacian (in_field, lap_field, num_halo, extend = 0):
+
+def laplacian(in_field, lap_field, num_halo, extend=0):
     ib = num_halo - extend
     ie = -num_halo + extend
     jb = num_halo - extend
     je = -num_halo + extend
 
-    lap_field [:, jb : je, ib : ie] = (
-        - 4.0 * in_field [:, jb : je, ib : ie]
-        + in_field [:, jb : je, ib - 1 : ie - 1]
-        + in_field [:, jb : je, ib + 1 : ie + 1 if ie != -1 else None]
-        + in_field [:, jb - 1 : je - 1, ib : ie]
-        + in_field [:, jb + 1 : je + 1 if je != -1 else None, ib : ie]
+    lap_field[:, jb:je, ib:ie] = (
+        -4.0 * in_field[:, jb:je, ib:ie]
+        + in_field[:, jb:je, ib - 1 : ie - 1]
+        + in_field[:, jb:je, ib + 1 : ie + 1 if ie != -1 else None]
+        + in_field[:, jb - 1 : je - 1, ib:ie]
+        + in_field[:, jb + 1 : je + 1 if je != -1 else None, ib:ie]
     )
 
-def update_halo (field, num_halo):
-    field [:, : num_halo, num_halo : - num_halo] = field [:, - 2 * num_halo : - num_halo, num_halo : - num_halo]
-    field [:, - num_halo :, num_halo : - num_halo] = field [:, num_halo : 2 * num_halo, num_halo : - num_halo]
-    field [:, :, : num_halo] = field [:, :, - 2 * num_halo : - num_halo]
-    field [:, :, - num_halo :] = field [:, :, num_halo : 2 * num_halo]
 
-def apply_diffusion (in_field, out_field, alpha, num_halo, num_iter = 1, use_gpu = False):
+def update_halo(field, num_halo):
+    field[:, :num_halo, num_halo:-num_halo] = field[:, -2 * num_halo : -num_halo, num_halo:-num_halo]
+    field[:, -num_halo:, num_halo:-num_halo] = field[:, num_halo : 2 * num_halo, num_halo:-num_halo]
+    field[:, :, :num_halo] = field[:, :, -2 * num_halo : -num_halo]
+    field[:, :, -num_halo:] = field[:, :, num_halo : 2 * num_halo]
+
+
+def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1, use_gpu=False):
     if use_gpu:
-        in_field = cp.array (in_field)
-        out_field = cp.array (out_field)
-        tmp_field = cp.empty_like (in_field)
+        in_field = cp.array(in_field)
+        out_field = cp.array(out_field)
+        tmp_field = cp.empty_like(in_field)
     else:
-        tmp_field = np.empty_like (in_field)
-    alpha_neg = - alpha
-    
+        tmp_field = np.empty_like(in_field)
+    alpha_neg = -alpha
+
     if False:
         # Instead of swapping in_field & out_field every loop, we halve the number of loops and swap the roles of both fields instead of the fields.
-        for n in range (num_iter // 2):
-            update_halo (in_field, num_halo)
-            laplacian (in_field, tmp_field, num_halo = num_halo, extend = 1)
-            laplacian (tmp_field, out_field, num_halo = num_halo, extend = 0)
-            in_core = in_field [:, num_halo : - num_halo, num_halo : - num_halo]
-            out_core = out_field [:, num_halo : - num_halo, num_halo : - num_halo]
-            np.add (in_core, alpha_neg * out_core, out = out_core)
+        for n in range(num_iter // 2):
+            update_halo(in_field, num_halo)
+            laplacian(in_field, tmp_field, num_halo=num_halo, extend=1)
+            laplacian(tmp_field, out_field, num_halo=num_halo, extend=0)
+            in_core = in_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            out_core = out_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            np.add(in_core, alpha_neg * out_core, out=out_core)
 
             # now we execute the same things with the roles of both fields swapped
-            update_halo (out_field, num_halo)
-            laplacian (out_field, tmp_field, num_halo = num_halo, extend = 1)
-            laplacian (tmp_field, in_field, num_halo = num_halo, extend = 0)
-            out_core = out_field [:, num_halo : - num_halo, num_halo : - num_halo]
-            in_core = in_field [:, num_halo : - num_halo, num_halo : - num_halo]
-            np.add (out_core, alpha_neg * in_core, out = in_core)
-            
+            update_halo(out_field, num_halo)
+            laplacian(out_field, tmp_field, num_halo=num_halo, extend=1)
+            laplacian(tmp_field, in_field, num_halo=num_halo, extend=0)
+            out_core = out_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            in_core = in_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            np.add(out_core, alpha_neg * in_core, out=in_core)
+
         # The above only works if we have an even number of iterations. If we have an uneven number of iterations, we have to execute the content
         # of the original loop once more
         if num_iter % 2 == 1:
-            update_halo (in_field, num_halo)
-            laplacian (in_field, tmp_field, num_halo = num_halo, extend = 1)
-            laplacian (tmp_field, out_field, num_halo = num_halo, extend = 0)
-            in_core = in_field [:, num_halo : - num_halo, num_halo : - num_halo]
-            out_core = out_field [:, num_halo : - num_halo, num_halo : - num_halo]
-            np.add (in_core, alpha_neg * out_core, out = out_core)
+            update_halo(in_field, num_halo)
+            laplacian(in_field, tmp_field, num_halo=num_halo, extend=1)
+            laplacian(tmp_field, out_field, num_halo=num_halo, extend=0)
+            in_core = in_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            out_core = out_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            np.add(in_core, alpha_neg * out_core, out=out_core)
 
-        update_halo (out_field, num_halo)
-        
+        update_halo(out_field, num_halo)
+
     else:
-        for n in range (num_iter):
-            update_halo (in_field, num_halo)
+        for n in range(num_iter):
+            update_halo(in_field, num_halo)
 
-            laplacian (in_field, tmp_field, num_halo = num_halo, extend = 1)
-            laplacian (tmp_field, out_field, num_halo = num_halo, extend = 0)
+            laplacian(in_field, tmp_field, num_halo=num_halo, extend=1)
+            laplacian(tmp_field, out_field, num_halo=num_halo, extend=0)
 
-            in_core = in_field [:, num_halo : - num_halo, num_halo : - num_halo]
-            out_core = out_field [:, num_halo : - num_halo, num_halo : - num_halo]
+            in_core = in_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            out_core = out_field[:, num_halo:-num_halo, num_halo:-num_halo]
 
-            np.add (in_core, alpha_neg * out_core, out = out_core)
+            np.add(in_core, alpha_neg * out_core, out=out_core)
 
             if n < num_iter - 1:
                 in_field, out_field = out_field, in_field
             else:
-                update_halo (out_field, num_halo)
+                update_halo(out_field, num_halo)
 
         if num_iter % 2 == 0:
             in_field, out_field = out_field, in_field
-        
-    if use_gpu:
-        out_field = cp.asnumpy (out_field)
 
-def calculations (nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result = False, use_gpu = False):
+    if use_gpu:
+        out_field = cp.asnumpy(out_field)
+
+
+def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False, use_gpu=False):
     assert 0 < nx <= 1024 * 1024, "You have to specify a reasonable value for nx"
     assert 0 < ny <= 1024 * 1024, "You have to specify a reasonable value for ny"
     assert 0 < nz <= 1024, "You have to specify a reasonable value for nz"
@@ -98,23 +102,28 @@ def calculations (nx, ny, nz, num_iter, result_dir, num_halo, precision, return_
 
     dtype = np.float64 if precision == "64" else np.float32
 
-    in_field = np.zeros ((nz, ny + 2 * num_halo, nx + 2 * num_halo), dtype = dtype)
-    in_field [nz // 4 : 3 * nz // 4, num_halo + ny // 4 : num_halo + 3 * ny // 4, num_halo + nx // 4 : num_halo + 3 * nx // 4,] = 1.0
-    out_field = np.copy (in_field)
+    in_field = np.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo), dtype=dtype)
+    in_field[
+        nz // 4 : 3 * nz // 4,
+        num_halo + ny // 4 : num_halo + 3 * ny // 4,
+        num_halo + nx // 4 : num_halo + 3 * nx // 4,
+    ] = 1.0
+    out_field = np.copy(in_field)
 
-    apply_diffusion (in_field, out_field, alpha, num_halo)
+    apply_diffusion(in_field, out_field, alpha, num_halo)
 
-    tic = time.time ()
-    apply_diffusion (in_field, out_field, alpha, num_halo, num_iter = num_iter, use_gpu = use_gpu)
-    toc = time.time ()
+    tic = time.time()
+    apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=num_iter, use_gpu=use_gpu)
+    toc = time.time()
 
-    print (f"Elapsed time for work = {toc - tic} s")
+    print(f"Elapsed time for work = {toc - tic} s")
 
     result_path = f"{result_dir}/{datetime.now ().strftime ('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
-    np.save (result_path, out_field)
+    np.save(result_path, out_field)
 
     if return_result:
         return out_field
+
 
 @click.command()
 @click.option("--nx", type=int, required=True, help="Number of gridpoints in x-direction")
@@ -134,14 +143,15 @@ def calculations (nx, ny, nz, num_iter, result_dir, num_halo, precision, return_
     default="../data/numpy",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
-@click.option (
+@click.option(
     "--use_gpu",
-    type = bool,
-    default = False,
-    help = "Use GPU acceleration if available",
+    type=bool,
+    default=False,
+    help="Use GPU acceleration if available",
 )
-def main (nx, ny, nz, num_iter, result_dir, num_halo, precision, use_gpu):
-    calculations (nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result = False, use_gpu = use_gpu)
+def main(nx, ny, nz, num_iter, result_dir, num_halo, precision, use_gpu):
+    calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False, use_gpu=use_gpu)
+
 
 if __name__ == "__main__":
     os.chdir(sys.path[0])  # Change the directory
