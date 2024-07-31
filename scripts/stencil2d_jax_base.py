@@ -13,6 +13,8 @@ from jax import numpy as jnp, config
 
 import time
 from datetime import datetime
+import os
+import sys
 
 
 def laplacian(in_field, lap_field, num_halo, extend=0):
@@ -107,9 +109,6 @@ def apply_diffusion(in_field, alpha, num_halo, num_iter=1):
         else:
             out_field = update_halo(out_field, num_halo)
 
-    if num_iter % 2 == 0:
-        in_field, out_field = out_field, in_field
-
     return out_field
 
 
@@ -173,4 +172,5 @@ def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
 
 
 if __name__ == "__main__":
+    os.chdir(sys.path[0])  # Change the directory
     main()
