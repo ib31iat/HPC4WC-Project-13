@@ -136,7 +136,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     toc = time.time()
 
     # Ensure the result is always in out_field (dirty fix of provided baseline)
-    if num_iter % 2 ==0:
+    if num_iter % 2 == 0:
         in_field, out_field = out_field, in_field
 
     print(f"Elapsed time for work = {toc - tic} s")
