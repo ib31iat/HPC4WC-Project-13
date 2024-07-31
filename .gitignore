@@ -7,3 +7,6 @@ data/*/*
 
 # Ignore Pycache
 __pycache__
+
+# Ignore VSCode stuff
+.vscode
