@@ -103,10 +103,6 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
         else:
             update_halo(out_field, num_halo)
 
-    # Ensure the result is always in out_field (dirty fix of provided baseline)
-    if num_iter % 2 == 0:
-        in_field, out_field = out_field, in_field
-
 
 def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False):
     """Driver for apply_diffusion that sets up fields and does timings"""
@@ -138,6 +134,10 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     tic = time.time()
     apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=num_iter)
     toc = time.time()
+
+    # Ensure the result is always in out_field (dirty fix of provided baseline)
+    if num_iter % 2 ==0:
+        in_field, out_field = out_field, in_field
 
     print(f"Elapsed time for work = {toc - tic} s")
 
