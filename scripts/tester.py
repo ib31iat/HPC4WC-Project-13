@@ -12,11 +12,12 @@ range_nx = []
 range_ny = []
 range_nz = []
 range_num_iter = []
-range_precision = ['32', '64']
-devices = ['cpu', 'gpu']
+range_precision = ["32", "64"]
+devices = ["cpu", "gpu"]
 functions = [jax_base_calc, jax_calc, numpy_calc, torch_calc]
 
-RESULT_PATH = ''
+RESULT_PATH = ""
+
 
 def tester():
     for nx in range_nx:
@@ -27,10 +28,14 @@ def tester():
                         for d in devices:
                             for f in functions:
                                 result = f(nx, ny, nz, num_iter, RESULT_PATH, 2, p, return_result=True)
-                                # Print result to correct results folder
+                                # TODO: print result to correct results folder
+                                with open(RESULT_PATH, "w") as out_file:
+                                    out_file.write(result)
+
 
 def main():
     tester()
+
 
 # Run with something like: srun --account=classXXX --constraint=gpu --partition=normal --nodes=1 --ntasks-per-core=1 --ntasks-per-node=1 --cpus-per-task=12 --hint=nomultithread python3 tester.py
 # TODO: make functions callable with gpu / cpu
