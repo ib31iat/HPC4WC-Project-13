@@ -9,7 +9,7 @@
 import click
 
 import numpy as np
-from jax import numpy as jnp, config
+from jax import numpy as jnp, config, devices
 
 import time
 from datetime import datetime
@@ -124,6 +124,9 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
 
     if precision == 64:
         config.update("jax_enable_x64", True)
+
+    devices("cpu")[0]
+    # devices("gpu")[0]
 
     in_field = jnp.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
     in_field = in_field.at[
