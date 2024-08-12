@@ -104,9 +104,9 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
         else:
             update_halo(out_field, num_halo)
 
-    # Ensure the result is always in out_field (dirty fix of provided baseline)
-    if num_iter % 2 == 0:
-        in_field, out_field = out_field, in_field
+    # # Ensure the result is always in out_field (dirty fix of provided baseline)
+    # if num_iter % 2 == 0:
+    #     in_field, out_field = out_field, in_field
 
 
 def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False):
@@ -121,6 +121,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
 
     if precision == "64":
         torch.set_default_dtype(torch.float64)
+    # Else default is 32
 
     in_field = torch.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo), device=device)
     in_field[
@@ -138,6 +139,10 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     tic = time.time()
     apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=num_iter)
     toc = time.time()
+
+    # Ensure the result is always in out_field (dirty fix of provided baseline)
+    if num_iter % 2 == 0:
+        in_field, out_field = out_field, in_field
 
     print(f"Elapsed time for work = {toc - tic} s")
 
