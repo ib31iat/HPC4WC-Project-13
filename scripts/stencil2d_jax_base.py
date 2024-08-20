@@ -174,7 +174,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     default=False,
     help="Use GPU acceleration if available (has no effect)",
 )
-def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
+def main(nx, ny, nz, num_iter, result_dir, num_halo, precision, use_gpu):
     calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False)
 
 
