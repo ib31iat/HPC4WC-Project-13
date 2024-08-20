@@ -141,8 +141,9 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
 
     print(f"Elapsed time for work = {toc - tic} s")
 
-    result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
-    np.save(result_path, out_field)
+    if result_dir != "":
+        result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
+        np.save(result_path, out_field)
 
     if return_result:
         return out_field
@@ -166,6 +167,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     default="../data/baseline",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
+
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
     calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False)
 

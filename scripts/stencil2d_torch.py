@@ -13,8 +13,8 @@ import torch
 import numpy as np
 import time
 from datetime import datetime
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import os
+import sys
 
 
 def laplacian(in_field, lap_field, num_halo, extend=0):
@@ -104,10 +104,6 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
         else:
             update_halo(out_field, num_halo)
 
-    # # Ensure the result is always in out_field (dirty fix of provided baseline)
-    # if num_iter % 2 == 0:
-    #     in_field, out_field = out_field, in_field
-
 
 def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False):
     """Driver for apply_diffusion that sets up fields and does timings"""
@@ -146,12 +142,12 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
 
     print(f"Elapsed time for work = {toc - tic} s")
 
-    result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
-    np.save(result_path, out_field.cpu())
+    if result_dir != "":
+        result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
+        np.save(result_path, out_field.cpu())
 
     if return_result:
         return out_field.cpu()
-
 
 @click.command()
 @click.option("--nx", type=int, required=True, help="Number of gridpoints in x-direction")
@@ -171,10 +167,23 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     default="../data/torch",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
-def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
+@click.option(
+    "--use_gpu",
+    type=bool,
+    default=False,
+    help="Use GPU acceleration if available",
+)
+
+def main(nx, ny, nz, num_iter, result_dir, num_halo, precision, use_gpu):
+    global device
+    if use_gpu and torch.cuda.is_available():
+        device = "cude"
+    else:
+        device = "cpu"
+
     calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False)
 
 
 if __name__ == "__main__":
-    # config.update("jax_enable_x64", True)
+    os.chdir(sys.path[0])  # Change the directory
     main()

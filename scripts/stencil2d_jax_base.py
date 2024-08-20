@@ -9,7 +9,7 @@
 import click
 
 import numpy as np
-from jax import numpy as jnp, config, devices
+from jax import numpy as jnp, config
 
 import time
 from datetime import datetime
@@ -125,9 +125,6 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     if precision == 64:
         config.update("jax_enable_x64", True)
 
-    devices("cpu")[0]
-    # devices("gpu")[0]
-
     in_field = jnp.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
     in_field = in_field.at[
         nz // 4 : 3 * nz // 4,
@@ -145,8 +142,9 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
 
     print(f"Elapsed time for work = {toc - tic} s")
 
-    result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
-    np.save(result_path, out_field)
+    if result_dir != "":
+        result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
+        np.save(result_path, out_field)
 
     if return_result:
         return out_field
@@ -170,9 +168,15 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     default="../data/jax",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
+@click.option(
+    "--use_gpu",
+    type=bool,
+    default=False,
+    help="Use GPU acceleration if available (has no effect)",
+)
+
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
     calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False)
-
 
 if __name__ == "__main__":
     os.chdir(sys.path[0])  # Change the directory
