@@ -17,6 +17,7 @@ from datetime import datetime
 import os
 import sys
 
+
 def laplacian(in_field, lap_field, num_halo, extend=0):
     """Compute the Laplacian using 2nd-order centered differences.
 
@@ -75,6 +76,7 @@ def update_halo(field, num_halo):
     field = field.at[:, :, -num_halo:].set(field[:, :, num_halo : 2 * num_halo])
 
     return field
+
 
 def apply_diffusion(in_field, alpha, num_halo, num_iter=1):
     """Integrate 4th-order diffusion equation by a certain number of iterations.
@@ -175,13 +177,12 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     default=False,
     help="Use GPU acceleration if available",
 )
-
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision, use_gpu):
     global update_halo_jit, laplacian_jit
     if use_gpu and len(devices("gpu")) != 0:
-        BACKEND="gpu"
+        BACKEND = "gpu"
     else:
-        BACKEND="cpu"
+        BACKEND = "cpu"
 
     jitter = partial(jit, backend=BACKEND)
 

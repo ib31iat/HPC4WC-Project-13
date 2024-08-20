@@ -149,6 +149,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     if return_result:
         return out_field.cpu()
 
+
 @click.command()
 @click.option("--nx", type=int, required=True, help="Number of gridpoints in x-direction")
 @click.option("--ny", type=int, required=True, help="Number of gridpoints in y-direction")
@@ -173,7 +174,6 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     default=False,
     help="Use GPU acceleration if available",
 )
-
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision, use_gpu):
     global device
     if use_gpu and torch.cuda.is_available():
