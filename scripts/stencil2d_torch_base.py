@@ -13,8 +13,7 @@ import torch
 import numpy as np
 import time
 from datetime import datetime
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# from memory_profiler import profile
 
 
 def laplacian(in_field, lap_field, num_halo, extend=0):
@@ -109,7 +108,8 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
     #     in_field, out_field = out_field, in_field
 
 
-def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False):
+# @profile
+def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, device, return_result=False):
     """Driver for apply_diffusion that sets up fields and does timings"""
 
     assert 0 < nx <= 1024 * 1024, "You have to specify a reasonable value for nx"
@@ -172,9 +172,9 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
-    calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False)
+    device = torch.device("cpu")
+    calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, device, return_result=False)
 
 
 if __name__ == "__main__":
-    # config.update("jax_enable_x64", True)
     main()
