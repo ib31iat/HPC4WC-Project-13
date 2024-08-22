@@ -17,12 +17,6 @@ from datetime import datetime
 import os
 import sys
 
-# TODO: device / backend selection
-BACKEND = "cpu"
-BACKEND = "gpu"
-
-jitter = partial(jit, backend=BACKEND)
-
 
 def laplacian(in_field, lap_field, num_halo, extend=0):
     """Compute the Laplacian using 2nd-order centered differences.
@@ -84,10 +78,6 @@ def update_halo(field, num_halo):
     return field
 
 
-update_halo_jit = jitter(update_halo, static_argnums=(1,))
-laplacian_jit = jitter(laplacian, static_argnums=(2, 3))
-
-
 def apply_diffusion(in_field, alpha, num_halo, num_iter=1):
     """Integrate 4th-order diffusion equation by a certain number of iterations.
 
@@ -138,9 +128,6 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     if precision == 64:
         config.update("jax_enable_x64", True)
 
-    devices("cpu")[0]
-    # devices("gpu")[0]
-
     in_field = jnp.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
     in_field = in_field.at[
         nz // 4 : 3 * nz // 4,
@@ -158,8 +145,9 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
 
     print(f"Elapsed time for work = {toc - tic} s")
 
-    result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
-    np.save(result_path, out_field)
+    if result_dir != "":
+        result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
+        np.save(result_path, out_field)
 
     if return_result:
         return out_field
@@ -183,7 +171,23 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     default="../data/jax",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
-def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
+@click.option(
+    "--use_gpu",
+    type=bool,
+    default=False,
+    help="Use GPU acceleration if available",
+)
+def main(nx, ny, nz, num_iter, result_dir, num_halo, precision, use_gpu):
+    global update_halo_jit, laplacian_jit
+    if use_gpu and len(devices("gpu")) != 0:
+        BACKEND = "gpu"
+    else:
+        BACKEND = "cpu"
+
+    jitter = partial(jit, backend=BACKEND)
+
+    update_halo_jit = jitter(update_halo, static_argnums=(1,))
+    laplacian_jit = jitter(laplacian, static_argnums=(2, 3))
     calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False)
 
 
