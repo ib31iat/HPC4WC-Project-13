@@ -2,7 +2,6 @@ import os
 import sys
 import click
 import numpy as np
-import cupy as cp
 import time
 from datetime import datetime
 
@@ -30,12 +29,7 @@ def update_halo(field, num_halo):
 
 
 def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1, use_gpu=False):
-    if use_gpu:
-        in_field = cp.array(in_field)
-        out_field = cp.array(out_field)
-        tmp_field = cp.empty_like(in_field)
-    else:
-        tmp_field = np.empty_like(in_field)
+    tmp_field = np.empty_like(in_field)
     alpha_neg = -alpha
 
     for n in range(num_iter):
@@ -56,9 +50,6 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1, use_gpu=Fa
 
         if num_iter % 2 == 0:
             in_field, out_field = out_field, in_field
-
-    if use_gpu:
-        out_field = cp.asnumpy(out_field)
 
     return out_field
 
