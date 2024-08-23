@@ -9,7 +9,7 @@
 import click
 
 import numpy as np
-from jax import numpy as jnp, config, jit, devices
+from jax import numpy as jnp, config, jit
 from functools import partial
 
 import time
@@ -177,20 +177,10 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     default="../data/jax",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
-@click.option(
-    "--use_gpu",
-    type=bool,
-    default=False,
-    help="Use GPU acceleration if available",
-)
-def main(nx, ny, nz, num_iter, result_dir, num_halo, precision, use_gpu):
+def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
     global update_halo_jit, laplacian_jit
-    if use_gpu and len(devices("gpu")) != 0:
-        BACKEND = "gpu"
-    else:
-        BACKEND = "cpu"
 
-    jitter = partial(jit, backend=BACKEND)
+    jitter = partial(jit, backend="cpu")
 
     update_halo_jit = jitter(update_halo, static_argnums=(1,))
     laplacian_jit = jitter(laplacian, static_argnums=(2, 3))

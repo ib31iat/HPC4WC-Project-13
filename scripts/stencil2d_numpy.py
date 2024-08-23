@@ -28,7 +28,7 @@ def update_halo(field, num_halo):
     field[:, :, -num_halo:] = field[:, :, num_halo : 2 * num_halo]
 
 
-def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1, use_gpu=False):
+def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
     tmp_field = np.empty_like(in_field)
     alpha_neg = -alpha
 
