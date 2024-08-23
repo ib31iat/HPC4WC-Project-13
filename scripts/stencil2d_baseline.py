@@ -104,7 +104,7 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
             update_halo(out_field, num_halo)
 
 
-def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False):
+def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", return_result=False, return_time=False):
     """Driver for apply_diffusion that sets up fields and does timings"""
 
     assert 0 < nx <= 1024 * 1024, "You have to specify a reasonable value for nx"
@@ -145,6 +145,12 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
         result_path = f"{result_dir}/{datetime.now().strftime('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
         np.save(result_path, out_field)
 
+    if return_time and return_result:
+        return out_field, toc - tic
+
+    if return_time:
+        return toc - tic
+
     if return_result:
         return out_field
 
@@ -168,7 +174,7 @@ def calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_r
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
-    calculations(nx, ny, nz, num_iter, result_dir, num_halo, precision, return_result=False)
+    calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir=result_dir, return_result=False)
 
 
 if __name__ == "__main__":

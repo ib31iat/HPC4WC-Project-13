@@ -70,7 +70,9 @@ def main():
 
     if baseline is None:
         # Solution has not been generated yet
-        baseline = solution_calc(nx, ny, nz, num_iter, BASELINE_SOLUTION_PATH, num_halo, precision, return_result=True)
+        baseline = solution_calc(
+            nx, ny, nz, num_iter, num_halo, precision, result_dir=BASELINE_SOLUTION_PATH, return_result=True
+        )
 
     # Compare the two solutions
     comparison_result = np.allclose(solution, baseline, rtol=args.rtol, atol=args.atol, equal_nan=True)
