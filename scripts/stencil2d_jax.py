@@ -180,7 +180,7 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
     global update_halo_jit, laplacian_jit
 
-    jitter = partial(jit, backend="cpu")
+    jitter = partial(jit, backend="cpu", inline=True)
 
     update_halo_jit = jitter(update_halo, static_argnums=(1,))
     laplacian_jit = jitter(laplacian, static_argnums=(2, 3))
