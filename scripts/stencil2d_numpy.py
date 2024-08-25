@@ -30,7 +30,6 @@ def update_halo(field, num_halo):
 
 def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
     tmp_field = np.empty_like(in_field)
-    alpha_neg = -alpha
 
     for n in range(num_iter):
         update_halo(in_field, num_halo)
@@ -38,18 +37,15 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
         laplacian(in_field, tmp_field, num_halo=num_halo, extend=1)
         laplacian(tmp_field, out_field, num_halo=num_halo, extend=0)
 
-        in_core = in_field[:, num_halo:-num_halo, num_halo:-num_halo]
-        out_core = out_field[:, num_halo:-num_halo, num_halo:-num_halo]
-
-        np.add(in_core, alpha_neg * out_core, out=out_core)
+        out_field[:, num_halo:-num_halo, num_halo:-num_halo] = (
+            in_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            - alpha * out_field[:, num_halo:-num_halo, num_halo:-num_halo]
+        )
 
         if n < num_iter - 1:
             in_field, out_field = out_field, in_field
         else:
             update_halo(out_field, num_halo)
-
-        if num_iter % 2 == 0:
-            in_field, out_field = out_field, in_field
 
     return out_field
 
