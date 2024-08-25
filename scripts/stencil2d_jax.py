@@ -125,6 +125,14 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     assert 2 <= num_halo <= 256, "Your have to specify a reasonable number of halo points"
     alpha = 1.0 / 32.0
 
+    # create jitted functions
+    global update_halo_jit, laplacian_jit
+
+    jitter = partial(jit, backend="cpu", inline=True)
+
+    update_halo_jit = jitter(update_halo, static_argnums=(1,))
+    laplacian_jit = jitter(laplacian, static_argnums=(2, 3))
+
     if precision == 64:
         config.update("jax_enable_x64", True)
 
@@ -178,12 +186,6 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
-    global update_halo_jit, laplacian_jit
-
-    jitter = partial(jit, backend="cpu", inline=True)
-
-    update_halo_jit = jitter(update_halo, static_argnums=(1,))
-    laplacian_jit = jitter(laplacian, static_argnums=(2, 3))
     calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir=result_dir, return_result=False)
 
 
