@@ -7,7 +7,7 @@ from datetime import datetime
 from numba import jit as njit
 
 
-@njit
+@njit(parallel=True, fastmath=True)
 def laplacian(in_field, lap_field, num_halo, extend=0):
     ib = num_halo - extend
     ie = -num_halo + extend
@@ -25,7 +25,7 @@ def laplacian(in_field, lap_field, num_halo, extend=0):
     return lap_field
 
 
-@njit
+@njit(parallel=True, fastmath=True)
 def update_halo(field, num_halo):
     field[:, :num_halo, num_halo:-num_halo] = field[:, -2 * num_halo : -num_halo, num_halo:-num_halo]
     field[:, -num_halo:, num_halo:-num_halo] = field[:, num_halo : 2 * num_halo, num_halo:-num_halo]
@@ -55,10 +55,6 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
             update_halo(out_field, num_halo)
 
     return out_field
-
-
-def my_jit(func, **kwargs):
-    return njit(**kwargs)(func)
 
 
 def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", return_result=False, return_time=False):
@@ -116,7 +112,7 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
 @click.option(
     "--result_dir",
     type=str,
-    default="../data/numpy",
+    default="../data/numba",
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
