@@ -5,7 +5,7 @@ import numpy as np
 import time
 from datetime import datetime
 from numba import jit as njit
-from functools import partial
+
 
 @njit
 def laplacian(in_field, lap_field, num_halo, extend=0):
@@ -23,6 +23,7 @@ def laplacian(in_field, lap_field, num_halo, extend=0):
     )
 
     return lap_field
+
 
 @njit
 def update_halo(field, num_halo):
@@ -55,8 +56,10 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
 
     return out_field
 
+
 def my_jit(func, **kwargs):
     return njit(**kwargs)(func)
+
 
 def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", return_result=False, return_time=False):
     assert 0 < nx <= 1024 * 1024, "You have to specify a reasonable value for nx"
