@@ -33,7 +33,7 @@ def tester():
         for p in range_precision:
             for f in functions:
                 for _ in range(num_reps):
-                    results[f"{num_reps}_nx{nx}_ny{ny}_nz{nz}_num_iter{num_iter}_p{p}_f{f}"] = f(
+                    results[f"{num_reps}_nx{nx}_ny{ny}_nz{nz}_num_iter{num_iter}_p{p}_f{f.__name__}"] = f(
                         nx, ny, nz, num_iter, 2, p, return_result=False, return_time=True
                     )
             with open(f"../results_tmp/{datetime.now().strftime('%Y%m%dT%H%M%S')}.pkl", "wb") as f_out:
