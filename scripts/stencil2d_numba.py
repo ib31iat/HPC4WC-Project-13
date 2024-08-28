@@ -102,7 +102,7 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
 @click.option("--ny", type=int, required=True, help="Number of gridpoints in y-direction")
 @click.option("--nz", type=int, required=True, help="Number of gridpoints in z-direction")
 @click.option("--num_iter", type=int, required=True, help="Number of iterations")
-@click.option("--precision", type=click.Choice(["64", "32"]), default="32", required=True, help="Precision")
+@click.option("--precision", type=click.Choice(["64", "32"]), default="64", required=True, help="Precision")
 @click.option(
     "--num_halo",
     type=int,
