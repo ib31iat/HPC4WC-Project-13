@@ -32,7 +32,7 @@ for filename in os.listdir(folder):
 def tester():
     for nx, ny, nz, num_iter in zip(range_nx, range_ny, range_nz, range_num_iter):
         for p in range_precision:
-            for n, f in functions:
+            for n, f in functions.items():
                 for r in range(num_reps):
                     results[f"{r}_nx{nx}_ny{ny}_nz{nz}_num_iter{num_iter}_p{p}_{n}"] = f(
                         nx, ny, nz, num_iter, 2, p, return_result=False, return_time=True
