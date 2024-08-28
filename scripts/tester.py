@@ -22,6 +22,11 @@ results = {}
 
 num_reps = 5
 
+# Delete content of folder results_tmp
+folder = "results_tmp"
+for filename in os.listdir(folder):
+    os.remove(os.path.join(folder, filename))
+
 
 def tester():
     for nx, ny, nz, num_iter in zip(range_nx, range_ny, range_nz, range_num_iter):
@@ -31,7 +36,7 @@ def tester():
                     results[f"{num_reps}_nx{nx}_ny{ny}_nz{nz}_num_iter{num_iter}_p{p}_f{f}"] = f(
                         nx, ny, nz, num_iter, 2, p, return_result=False, return_time=True
                     )
-            with open(f"../results/{datetime.now().strftime('%Y%m%dT%H%M%S')}.pkl", "wb") as f_out:
+            with open(f"../results_tmp/{datetime.now().strftime('%Y%m%dT%H%M%S')}.pkl", "wb") as f_out:
                 pickle.dump(results, f_out)
 
 
