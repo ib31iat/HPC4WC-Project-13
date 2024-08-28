@@ -11,10 +11,10 @@ from stencil2d_torch import calculations as torch_calc
 from stencil2d_numba import calculations as numba_calc
 
 # Define paramters to test
-range_nx = [128, 1024, 2048]
-range_ny = [128, 1024, 2048]
-range_nz = [64, 128, 128, 128]
-range_num_iter = [128, 1024, 1024]
+range_nx = [128, 256]
+range_ny = [128, 256]
+range_nz = [64, 256]
+range_num_iter = [128, 512]
 range_precision = ["32", "64"]
 functions = [jax_base_calc, jax_calc, numpy_calc, torch_calc, numba_calc]
 
@@ -25,7 +25,8 @@ num_reps = 5
 # Delete content of folder results_tmp
 folder = "results_tmp"
 for filename in os.listdir(folder):
-    os.remove(os.path.join(folder, filename))
+    if not filename.startswith("."):
+        os.remove(os.path.join(folder, filename))
 
 
 def tester():
