@@ -31,8 +31,8 @@ def tester():
                     results[f"{num_reps}_nx{nx}_ny{ny}_nz{nz}_num_iter{num_iter}_p{p}_f{f}"] = f(
                         nx, ny, nz, num_iter, 2, p, return_result=False, return_time=True
                     )
-                    with open(f"../results/{datetime.now().strftime('%Y%m%dT%H%M%S')}.pkl", "wb") as f_out:
-                        pickle.dump(results, f_out)
+            with open(f"../results/{datetime.now().strftime('%Y%m%dT%H%M%S')}.pkl", "wb") as f_out:
+                pickle.dump(results, f_out)
 
 
 def main():
