@@ -2,6 +2,7 @@ import os
 import sys
 from datetime import datetime
 import pickle
+import numpy as np
 
 # Import functions
 from stencil2d_jax_base import calculations as jax_base_calc
@@ -11,10 +12,10 @@ from stencil2d_torch import calculations as torch_calc
 from stencil2d_numba import calculations as numba_calc
 
 # Define paramters to test
-range_nx = [128, 256]
-range_ny = [128, 256]
-range_nz = [64, 256]
-range_num_iter = [128, 512]
+range_nx = [16, 32, 48, 64, 80, 96, 112, 128]
+range_ny = range_nx
+range_nz = np.repeat(64, len(range_nx))
+range_num_iter = np.repeat(128, len(range_nx))
 range_precision = ["32", "64"]
 functions = {"jax_base": jax_base_calc, "jax": jax_calc, "numpy": numpy_calc, "torch": torch_calc, "numba": numba_calc}
 
