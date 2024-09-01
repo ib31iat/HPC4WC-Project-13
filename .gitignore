@@ -5,6 +5,10 @@
 data/*/*
 !data/**/.gitkeep
 
+# Ignore temporary results
+results_tmp/*
+!results_tmp/*/.gitkeep
+
 # Ignore Pycache
 __pycache__
 
