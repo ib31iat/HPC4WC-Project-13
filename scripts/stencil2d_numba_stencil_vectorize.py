@@ -6,18 +6,18 @@ import time
 from datetime import datetime
 from numba import stencil, vectorize, njit, float32, float64
 
+
 # Define the stencil for the Laplacian operation
 @stencil
 def laplacian_kernel(in_field):
-    return (-4.0 * in_field[0, 0, 0] +
-        in_field[0, 0, -1] + in_field[0, 0, 1] +
-        in_field[0, -1, 0] + in_field[0, 1, 0])
+    return -4.0 * in_field[0, 0, 0] + in_field[0, 0, -1] + in_field[0, 0, 1] + in_field[0, -1, 0] + in_field[0, 1, 0]
+
 
 # Use vectorize for the update operation
-@vectorize([float32(float32, float32, float32), float64(float64, float64, float64)],
-target='parallel')
+@vectorize([float32(float32, float32, float32), float64(float64, float64, float64)], target="parallel")
 def update_field(in_val, lap_val, alpha):
     return in_val - alpha * lap_val
+
 
 @njit(parallel=True, fastmath=True)
 def update_halo(field, num_halo):
@@ -26,6 +26,7 @@ def update_halo(field, num_halo):
     field[:, :, :num_halo] = field[:, :, -2 * num_halo : -num_halo]
     field[:, :, -num_halo:] = field[:, :, num_halo : 2 * num_halo]
     return field
+
 
 def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
     for n in range(num_iter):
@@ -39,7 +40,7 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
         out_field[:, num_halo:-num_halo, num_halo:-num_halo] = update_field(
             in_field[:, num_halo:-num_halo, num_halo:-num_halo],
             lap_field[:, num_halo:-num_halo, num_halo:-num_halo],
-            alpha
+            alpha,
         )
 
         if n < num_iter - 1:
@@ -48,6 +49,7 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
             update_halo(out_field, num_halo)
 
     return out_field
+
 
 def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", return_result=False, return_time=False):
     assert 0 < nx <= 1024 * 1024, "You have to specify a reasonable value for nx"
@@ -75,7 +77,7 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     toc = time.time()
 
     print(f"Elapsed time for work = {toc - tic} s")
-    
+
     if result_dir != "":
         result_path = f"{result_dir}/{datetime.now ().strftime ('%Y%m%dT%H%M%S')}-nx{nx}_ny{ny}_nz{nz}_iter{num_iter}_halo{num_halo}_p{precision}.npy"
         np.save(result_path, out_field)
@@ -88,6 +90,7 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
 
     if return_result:
         return out_field
+
 
 @click.command()
 @click.option("--nx", type=int, required=True, help="Number of gridpoints in x-direction")
@@ -108,9 +111,9 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     help="Specify the folder where the results should be saved (relative to the location of the script or absolute).",
 )
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
-    calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir=result_dir,
-return_result=False)
+    calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir=result_dir, return_result=False)
+
 
 if __name__ == "__main__":
-    os.chdir(sys.path[0]) # Change the directory
+    os.chdir(sys.path[0])  # Change the directory
     main()

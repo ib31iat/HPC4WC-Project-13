@@ -4,7 +4,8 @@ import click
 import numpy as np
 import time
 from datetime import datetime
-from numba import njit, prange
+from numba import njit
+
 
 @njit(parallel=True, fastmath=True)
 def laplacian(in_field, lap_field, num_halo, extend=0):
@@ -18,9 +19,10 @@ def laplacian(in_field, lap_field, num_halo, extend=0):
         + in_field[:, jb:je, ib + 1 : ie + 1 if ie != -1 else in_field.shape[2]]
         + in_field[:, jb - 1 : je - 1, ib:ie]
         + in_field[:, jb + 1 : je + 1 if je != -1 else in_field.shape[1], ib:ie]
-)
+    )
 
     return lap_field
+
 
 @njit(parallel=True, fastmath=True)
 def update_halo(field, num_halo):
@@ -30,6 +32,7 @@ def update_halo(field, num_halo):
     field[:, :, -num_halo:] = field[:, :, num_halo : 2 * num_halo]
     return field
 
+
 @njit(parallel=True, fastmath=True)
 def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1, update_halo_func=None, laplacian_func=None):
     tmp_field = np.empty_like(in_field)
@@ -37,13 +40,17 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1, update_hal
         in_field = update_halo_func(in_field, num_halo)
         tmp_field = laplacian_func(in_field, tmp_field, num_halo=num_halo, extend=1)
         out_field = laplacian_func(tmp_field, out_field, num_halo=num_halo, extend=0)
-        out_field[:, num_halo:-num_halo, num_halo:-num_halo] = ( in_field[:, num_halo:-num_halo, num_halo:-num_halo] - alpha * out_field[:, num_halo:-num_halo, num_halo:-num_halo])
+        out_field[:, num_halo:-num_halo, num_halo:-num_halo] = (
+            in_field[:, num_halo:-num_halo, num_halo:-num_halo]
+            - alpha * out_field[:, num_halo:-num_halo, num_halo:-num_halo]
+        )
 
         if n < num_iter - 1:
             in_field, out_field = out_field, in_field
         else:
             out_field = update_halo_func(out_field, num_halo)
     return out_field
+
 
 def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", return_result=False, return_time=False):
     assert 0 < nx <= 1024 * 1024, "You have to specify a reasonable value for nx"
@@ -55,24 +62,19 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     dtype = np.float64 if precision == "64" else np.float32
     in_field = np.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo), dtype=dtype)
     in_field = np.ascontiguousarray(in_field)
-    in_field[nz // 4 : 3 * nz // 4,
+    in_field[
+        nz // 4 : 3 * nz // 4,
         num_halo + ny // 4 : num_halo + 3 * ny // 4,
         num_halo + nx // 4 : num_halo + 3 * nx // 4,
     ] = 1.0
     out_field = np.copy(in_field)
     apply_diffusion(
-        in_field, out_field, alpha, num_halo,
-        num_iter=1,
-        update_halo_func=update_halo,
-        laplacian_func=laplacian
+        in_field, out_field, alpha, num_halo, num_iter=1, update_halo_func=update_halo, laplacian_func=laplacian
     )
-    
+
     tic = time.time()
     out_field = apply_diffusion(
-        in_field, out_field, alpha, num_halo,
-        num_iter=num_iter,
-        update_halo_func=update_halo,
-        laplacian_func=laplacian
+        in_field, out_field, alpha, num_halo, num_iter=num_iter, update_halo_func=update_halo, laplacian_func=laplacian
     )
     toc = time.time()
     print(f"Elapsed time for work = {toc - tic} s")
@@ -87,13 +89,13 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     if return_result:
         return out_field
 
+
 @click.command()
 @click.option("--nx", type=int, required=True, help="Number of gridpoints in x-direction")
 @click.option("--ny", type=int, required=True, help="Number of gridpoints in y-direction")
 @click.option("--nz", type=int, required=True, help="Number of gridpoints in z-direction")
 @click.option("--num_iter", type=int, required=True, help="Number of iterations")
-@click.option("--precision", type=click.Choice(["64", "32"]), default="64", required=True,
-help="Precision")
+@click.option("--precision", type=click.Choice(["64", "32"]), default="64", required=True, help="Precision")
 @click.option(
     "--num_halo",
     type=int,
@@ -109,6 +111,7 @@ help="Precision")
 def main(nx, ny, nz, num_iter, result_dir, num_halo, precision):
     calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir=result_dir, return_result=False)
 
+
 if __name__ == "__main__":
-    os.chdir(sys.path[0]) # Change the directory
+    os.chdir(sys.path[0])  # Change the directory
     main()
