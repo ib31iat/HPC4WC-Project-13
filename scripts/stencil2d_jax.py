@@ -135,6 +135,8 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
 
     if precision == "64":
         config.update("jax_enable_x64", True)
+    else
+        config.update("jax_enable_x64", False)
 
     in_field = jnp.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
     in_field = in_field.at[
