@@ -46,8 +46,6 @@ def main():
     tester()
 
 
-# Run with something like: srun --account=classXXX --constraint=gpu --partition=normal --nodes=1 --ntasks-per-core=1 --ntasks-per-node=1 --cpus-per-task=12 --hint=nomultithread python3 tester.py
-
 if __name__ == "__main__":
     os.chdir(sys.path[0])  # Change the directory
     main()
