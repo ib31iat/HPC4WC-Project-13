@@ -1,6 +1,8 @@
 name: Check requirements file
 on:
-  push
+  push:
+    paths:
+      - requirements.txt
 
 
 jobs:
