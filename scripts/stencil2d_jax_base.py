@@ -122,7 +122,7 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     assert 2 <= num_halo <= 256, "Your have to specify a reasonable number of halo points"
     alpha = 1.0 / 32.0
 
-    if precision == 64:
+    if precision == "64":
         config.update("jax_enable_x64", True)
 
     in_field = jnp.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))

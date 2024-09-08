@@ -133,7 +133,7 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     update_halo_jit = jitter(update_halo, static_argnums=(1,))
     laplacian_jit = jitter(laplacian, static_argnums=(2, 3))
 
-    if precision == 64:
+    if precision == "64":
         config.update("jax_enable_x64", True)
 
     in_field = jnp.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo))
