@@ -16,7 +16,6 @@ distro==1.5.0
 filelock==3.15.4
 Flask==1.1.2
 fsspec==2024.6.0
-gt4py==0.1.0
 importlib_metadata==8.4.0
 itsdangerous==1.1.0
 jax==0.4.30
@@ -26,7 +25,6 @@ llvmlite==0.43.0
 locket==1.0.0
 MarkupSafe==2.1.5
 ml-dtypes==0.4.0
-mpi4py==3.1.4
 mpmath==1.2.1
 networkx==2.5.1
 numba==0.60.0
