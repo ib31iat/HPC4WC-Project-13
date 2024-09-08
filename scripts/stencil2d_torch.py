@@ -131,6 +131,8 @@ def calculations(
 
     if precision == "64":
         torch.set_default_dtype(torch.float64)
+    else:
+        torch.set_default_dtype(torch.float32)
     # Else default is 32
 
     in_field = torch.zeros((nz, ny + 2 * num_halo, nx + 2 * num_halo), device=device)
