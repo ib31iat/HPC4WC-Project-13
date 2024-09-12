@@ -15,6 +15,7 @@ import time
 from datetime import datetime
 from numba import jit as njit
 
+
 # Use parallelism and fastmath enabled for performance optimisation
 @njit(parallel=True, fastmath=True)
 def laplacian(in_field, lap_field, num_halo, extend=0):
