@@ -14,6 +14,7 @@ There are various different implementations:
 - `baseline`: Slightly adapted version from course to serve as a baseline
 - `jax_base`: A basic adaption of `baseline` that uses jax
 - `jax`: Use the JAX JIT compiler
+- `numba_improved`: An improved Numba version
 - `numba_stencil_vectorize`: A Numba version that uses the stencil and vecorize decorator
 - `numba`: Adaption of `baseline` to use Numba
 - `numpy`: Add some input arguments, else the same as `baseline`
