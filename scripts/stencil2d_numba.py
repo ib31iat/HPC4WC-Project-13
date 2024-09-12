@@ -1,3 +1,12 @@
+# ******************************************************
+#     Program: stencil2d
+#      Author: Tobias Rahn
+#       Email: tobias.rahn@inf.ethz.ch
+#        Date: 28.06.2024
+# Description: 4th-order diffusion
+#        Note: Based on https://github.com/ofuhrer/HPC4WC/blob/main/day1/stencil2d.py
+# ******************************************************
+
 import os
 import sys
 import click
@@ -6,9 +15,22 @@ import time
 from datetime import datetime
 from numba import jit as njit
 
-
+# Use parallelism and fastmath enabled for performance optimisation
 @njit(parallel=True, fastmath=True)
 def laplacian(in_field, lap_field, num_halo, extend=0):
+    """Compute the Laplacian using 2nd-order centered differences.
+
+    Parameters
+    ----------
+    in_field : array-like
+        Input field (nz x ny x nx with halo in x- and y-direction).
+    lap_field : array-like
+        Result (must be same size as ``in_field``).
+    num_halo : int
+        Number of halo points.
+    extend : `int`, optional
+        Extend computation into halo-zone by this number of points.
+    """
     ib = num_halo - extend
     ie = -num_halo + extend
     jb = num_halo - extend
@@ -27,15 +49,45 @@ def laplacian(in_field, lap_field, num_halo, extend=0):
 
 @njit(parallel=True, fastmath=True)
 def update_halo(field, num_halo):
+    """Update the halo-zone using an up/down and left/right strategy.
+
+    Parameters
+    ----------
+    field : array-like
+        Input/output field (nz x ny x nx with halo in x- and y-direction).
+    num_halo : int
+        Number of halo points.
+
+    Note
+    ----
+        Corners are updated in the left/right phase of the halo-update.
+    """
+    # bottom edge (without corners)
     field[:, :num_halo, num_halo:-num_halo] = field[:, -2 * num_halo : -num_halo, num_halo:-num_halo]
+    # top edge (without corners)
     field[:, -num_halo:, num_halo:-num_halo] = field[:, num_halo : 2 * num_halo, num_halo:-num_halo]
+    # left edge (including corners)
     field[:, :, :num_halo] = field[:, :, -2 * num_halo : -num_halo]
+    # right edge (including corners)
     field[:, :, -num_halo:] = field[:, :, num_halo : 2 * num_halo]
 
     return field
 
 
 def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
+    """Integrate 4th-order diffusion equation by a certain number of iterations.
+
+    Parameters
+    ----------
+    in_field : array-like
+        Input field (nz x ny x nx with halo in x- and y-direction).
+    lap_field : array-like
+        Result (must be same size as ``in_field``).
+    alpha : float
+        Diffusion coefficient (dimensionless).
+    num_iter : `int`, optional
+        Number of iterations to execute.
+    """
     tmp_field = np.empty_like(in_field)
 
     for n in range(num_iter):
@@ -58,6 +110,7 @@ def apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=1):
 
 
 def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", return_result=False, return_time=False):
+    """Driver for apply_diffusion that sets up fields and does timings"""
     assert 0 < nx <= 1024 * 1024, "You have to specify a reasonable value for nx"
     assert 0 < ny <= 1024 * 1024, "You have to specify a reasonable value for ny"
     assert 0 < nz <= 1024, "You have to specify a reasonable value for nz"
@@ -75,8 +128,10 @@ def calculations(nx, ny, nz, num_iter, num_halo, precision, result_dir="", retur
     ] = 1.0
     out_field = np.copy(in_field)
 
+    # warmup caches
     apply_diffusion(in_field, out_field, alpha, num_halo)
 
+    # time the actual work
     tic = time.time()
     out_field = apply_diffusion(in_field, out_field, alpha, num_halo, num_iter=num_iter)
     toc = time.time()
