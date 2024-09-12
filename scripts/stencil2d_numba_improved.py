@@ -15,6 +15,7 @@ import time
 from datetime import datetime
 from numba import njit
 
+
 # Use parallelism and fastmath enabled for performance optimisation
 @njit(parallel=True, fastmath=True)
 def laplacian(in_field, lap_field, num_halo, extend=0):
@@ -70,6 +71,7 @@ def update_halo(field, num_halo):
     # right edge (including corners)
     field[:, :, -num_halo:] = field[:, :, num_halo : 2 * num_halo]
     return field
+
 
 # Functions for halo update and Laplacian are passed as arguments
 @njit(parallel=True, fastmath=True)
