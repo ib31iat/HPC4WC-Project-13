@@ -19,7 +19,7 @@ from numba import stencil, vectorize, njit, float32, float64
 # Define the stencil for the Laplacian operation
 @stencil
 def laplacian_kernel(in_field):
-"""Compute the Laplacian using 2nd-order centered differences.
+    """Compute the Laplacian using 2nd-order centered differences.
 
     Parameters
     ----------
@@ -33,6 +33,7 @@ def laplacian_kernel(in_field):
 @vectorize([float32(float32, float32, float32), float64(float64, float64, float64)], target="parallel")
 def update_field(in_val, lap_val, alpha):
     return in_val - alpha * lap_val
+
 
 # Use parallelism and fastmath enabled for performance optimisation
 @njit(parallel=True, fastmath=True)
